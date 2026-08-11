@@ -1,0 +1,33 @@
+{
+  "user_id": "hostel_student_1",
+  "name": "Hostel CS Student",
+  "year": "1st Year (CS/IT)",
+  "started_date": "2026-08-10",
+  "last_sync": "2026-08-10T16:05:00Z",
+  "target_outcomes": [
+    "High-paying Placement / FAANG",
+    "AI/ML Specialization",
+    "Build Startup / Side Projects",
+    "Content Creation (YouTube/Blogs)",
+    "Fitness & Health"
+  ],
+  "current_week_key": "2026-08-10",
+  "completed_goals": {
+    "goal_1": false,
+    "goal_2": false,
+    "goal_3": false,
+    "goal_4": false,
+    "goal_5": false,
+    "goal_6": false
+  },
+  "self_ratings": {
+    "study": 6,
+    "tech": 5,
+    "fitness": 7,
+    "social": 6,
+    "finance": 6,
+    "content": 4,
+    "mental": 7
+  },
+  "notes": "Starting 1st year CS. Excited to build strong fundamentals in Python, AI, and Git."
+}

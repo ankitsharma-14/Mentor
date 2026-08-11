@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mentor OS — AI Autonomous Agent Dashboard</title>
+  <meta name="description" content="Personal mentor tracking system powered by an autonomous AI agent." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Load Agent Store JS to bypass file:// protocol CORS restrictions -->
+  <script src="mentor_store.js"></script>
+  <style>
+    :root {
+      --bg-base: #07070f;
+      --bg-layer1: #0d0d1a;
+      --bg-layer2: #111126;
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08);
+      --glass-hover: rgba(255,255,255,0.07);
+      --purple: #7c3aed;
+      --purple-light: #9d5cf6;
+      --purple-glow: rgba(124,58,237,0.25);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6,182,212,0.2);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245,158,11,0.2);
+      --green: #10b981;
+      --green-glow: rgba(16,185,129,0.2);
+      --red: #ef4444;
+      --pink: #ec4899;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #475569;
+      --sidebar-w: 260px;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    .bg-orb {
+      position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0;
+      animation: float 8s ease-in-out infinite;
+    }
+    .bg-orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%); top: -100px; left: -100px; animation-delay: 0s; }
+    .bg-orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%); bottom: -100px; right: -100px; animation-delay: 4s; }
+    .bg-orb-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%); top: 50%; left: 50%; animation-delay: 2s; }
+
+    @keyframes float { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-30px) scale(1.05); } }
+
+    .layout { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    .sidebar {
+      width: var(--sidebar-w); height: 100vh; position: fixed; top: 0; left: 0;
+      background: rgba(13,13,26,0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 28px 20px;
+      z-index: 100; transition: transform 0.3s ease;
+    }
+
+    .sidebar-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding: 0 4px; }
+    .logo-icon {
+      width: 42px; height: 42px; background: linear-gradient(135deg, var(--purple), var(--cyan));
+      border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;
+      box-shadow: 0 0 24px var(--purple-glow); flex-shrink: 0;
+    }
+    .logo-title { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+    .logo-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+
+    .agent-status-tag {
+      background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); border-radius: 20px;
+      padding: 6px 12px; font-size: 11px; color: var(--green); font-weight: 600; display: flex; align-items: center;
+      gap: 6px; margin-bottom: 20px;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.6; } }
+
+    .nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); padding: 0 8px; margin-bottom: 8px; margin-top: 10px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: all 0.2s ease; color: var(--text-secondary); font-size: 14px; font-weight: 500;
+      border: 1px solid transparent; margin-bottom: 2px; position: relative;
+    }
+    .nav-item:hover { background: var(--glass-hover); color: var(--text-primary); border-color: var(--glass-border); }
+    .nav-item.active { background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.1)); border-color: rgba(124,58,237,0.3); color: var(--text-primary); }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 20%; height: 60%; width: 3px; background: linear-gradient(180deg, var(--purple), var(--cyan)); border-radius: 0 4px 4px 0; }
+    .nav-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+
+    .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--glass-border); }
+    .gaming-credits-badge {
+      background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+      border: 1px solid rgba(245,158,11,0.25); border-radius: var(--radius-sm); padding: 12px 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .gaming-credits-badge .icon { font-size: 22px; }
+    .gaming-credits-badge .label { font-size: 11px; color: var(--text-muted); }
+    .gaming-credits-badge .value { font-size: 16px; font-weight: 700; color: var(--amber); }
+
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 32px 36px; min-height: 100vh; }
+    .page { display: none; animation: fadeIn 0.3s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .page-header { margin-bottom: 28px; }
+    .page-title { font-size: 30px; font-weight: 800; background: linear-gradient(135deg, var(--text-primary), var(--text-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+    .page-subtitle { font-size: 14px; color: var(--text-muted); }
+
+    .card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 24px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: border-color 0.2s ease, transform 0.2s ease; }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .grid-main { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+
+    .stat-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 22px 24px; position: relative; overflow: hidden; transition: all 0.25s ease; }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .stat-card.purple::before { background: linear-gradient(90deg, var(--purple), transparent); }
+    .stat-card.cyan::before { background: linear-gradient(90deg, var(--cyan), transparent); }
+    .stat-card.amber::before { background: linear-gradient(90deg, var(--amber), transparent); }
+    .stat-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+    .stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.14); }
+    .stat-icon { font-size: 28px; margin-bottom: 12px; display: block; }
+    .stat-value { font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .stat-card.purple .stat-value { color: var(--purple-light); }
+    .stat-card.cyan .stat-value { color: var(--cyan); }
+    .stat-card.amber .stat-value { color: var(--amber); }
+    .stat-card.green .stat-value { color: var(--green); }
+    .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+    .goal-item { display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid transparent; transition: all 0.2s ease; margin-bottom: 10px; background: rgba(255,255,255,0.02); }
+    .goal-item:hover { background: var(--glass-hover); border-color: var(--glass-border); }
+    .goal-item.done { opacity: 0.55; background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.15); }
+    .goal-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--glass-border); background: transparent; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; margin-top: 2px; }
+    .goal-check:hover { border-color: var(--purple); background: var(--purple-glow); }
+    .goal-item.done .goal-check { background: var(--green); border-color: var(--green); }
+    .goal-check::after { content: '✓'; color: white; font-size: 13px; font-weight: 700; display: none; }
+    .goal-item.done .goal-check::after { display: block; }
+    .goal-text { flex: 1; font-size: 14px; color: var(--text-primary); line-height: 1.5; }
+    .goal-item.done .goal-text { text-decoration: line-through; color: var(--text-muted); }
+
+    .goal-category { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 600; flex-shrink: 0; }
+    .cat-study { background: rgba(124,58,237,0.2); color: #a78bfa; }
+    .cat-tech { background: rgba(6,182,212,0.2); color: #67e8f9; }
+    .cat-research { background: rgba(236,72,153,0.2); color: #f9a8d4; }
+    .cat-fitness { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+    .cat-social { background: rgba(245,158,11,0.2); color: #fcd34d; }
+    .cat-finance { background: rgba(99,102,241,0.2); color: #c7d2fe; }
+    .cat-mindset { background: rgba(236,72,153,0.2); color: #f9a8d4; }
+
+    .resource-card {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+      padding: 16px; margin-bottom: 12px; transition: all 0.2s;
+    }
+    .resource-card:hover { border-color: rgba(6,182,212,0.4); background: rgba(6,182,212,0.05); }
+    .resource-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+    .resource-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .resource-link { color: var(--cyan); text-decoration: none; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
+    .resource-link:hover { text-decoration: underline; }
+
+    .reflection-textarea {
+      width: 100%; min-height: 100px; padding: 14px 16px; background: var(--glass); border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm); color: var(--text-primary); font-family: 'Outfit', sans-serif; font-size: 14px;
+      line-height: 1.6; resize: vertical; outline: none; transition: border-color 0.2s; margin-top: 8px;
+    }
+    .reflection-textarea:focus { border-color: var(--purple); }
+
+    .btn { padding: 11px 20px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary { background: linear-gradient(135deg, var(--purple), #5b21b6); color: white; box-shadow: 0 4px 20px var(--purple-glow); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(124,58,237,0.4); }
+    .btn-secondary { background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-secondary); }
+    .btn-secondary:hover { background: var(--glass-hover); color: var(--text-primary); }
+
+    .toast { position: fixed; bottom: 30px; right: 30px; background: var(--green); color: white; padding: 14px 24px; border-radius: var(--radius-sm); font-weight: 600; font-size: 14px; box-shadow: 0 8px 32px rgba(16,185,129,0.4); transform: translateY(80px); opacity: 0; transition: all 0.3s ease; z-index: 9999; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    .section-gap { margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+
+<div class="toast" id="toast">✅ Saved successfully!</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🤖</div>
+      <div class="logo-text">
+        <div class="logo-title">Mentor OS</div>
+        <div class="logo-sub">AI Agent Powered</div>
+      </div>
+    </div>
+
+    <div class="agent-status-tag">
+      <div class="status-dot"></div> Agent Reading Apps Data
+    </div>
+
+    <div class="nav-section-label">Navigation</div>
+    <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+      <span class="nav-icon">⚡</span> Dashboard
+    </div>
+    <div class="nav-item" id="nav-weekly" onclick="showPage('weekly')">
+      <span class="nav-icon">📋</span> Weekly Goals
+    </div>
+    <div class="nav-item" id="nav-research" onclick="showPage('research')">
+      <span class="nav-icon">🔬</span> AI Papers & YT
+    </div>
+    <div class="nav-item" id="nav-mentor" onclick="showPage('mentor')">
+      <span class="nav-icon">📊</span> Mentor Insights
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn btn-secondary" style="width:100%; margin-bottom:12px; font-size:12px; justify-content:center;" onclick="saveAgentStateFile()">🔄 Save & Sync State</button>
+      <div class="gaming-credits-badge">
+        <span class="icon">🎮</span>
+        <div>
+          <div class="label">Gaming Credits</div>
+          <div class="value" id="sidebarCredits">0 hrs earned</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Industry-Aligned Mentor Dashboard ⚡</div>
+        <div class="page-subtitle">Curated automatically by your personal AI Agent for Product Company Standards.</div>
+      </div>
+
+      <div class="grid-4 section-gap">
+        <div class="stat-card purple">
+          <span class="stat-icon">🎯</span>
+          <div class="stat-value" id="statFocus">FAANG/AI</div>
+          <div class="stat-label">Target Standard</div>
+        </div>
+        <div class="stat-card cyan">
+          <span class="stat-icon">✅</span>
+          <div class="stat-value" id="statTasksDone">0/0</div>
+          <div class="stat-label">Goals Done This Week</div>
+        </div>
+        <div class="stat-card amber">
+          <span class="stat-icon">🎮</span>
+          <div class="stat-value" id="statGaming">0h</div>
+          <div class="stat-label">Gaming Hours Earned</div>
+        </div>
+        <div class="stat-card green">
+          <span class="stat-icon">🔬</span>
+          <div class="stat-value" id="statPapersCount">1 Paper</div>
+          <div class="stat-label">This Week's AI Reading</div>
+        </div>
+      </div>
+
+      <div class="grid-main">
+        <div>
+          <div class="card section-gap">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+              <div class="card-title" style="margin:0">Agent-Generated Weekly Goals</div>
+              <span id="weekTitleBadge" style="font-size:12px; color:var(--cyan); font-weight:600"></span>
+            </div>
+            <div id="dashWeeklyList"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:20px">
+          <div class="card" style="background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(6,182,212,0.06))">
+            <div class="card-title">🤖 Agent Mentor Briefing</div>
+            <div id="agentBriefingText" style="font-size:14px; line-height:1.6; color:var(--text-primary)">
+              Loading latest report from AI Mentor...
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📌 This Week's Priority Media</div>
+            <div id="dashMediaPreview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEKLY GOALS -->
+    <div class="page" id="page-weekly">
+      <div class="page-header">
+        <div class="page-title">Weekly Goals & Tasks 📋</div>
+        <div class="page-subtitle">Check off what you did. What you couldn't do will be analyzed by the Agent to update next week's plan.</div>
+      </div>
+
+      <div class="card section-gap">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+          <div class="card-title" style="margin:0" id="weeklyFocusHeader">Weekly Focus</div>
+          <button class="btn btn-primary" onclick="saveAgentStateFile()">💾 Save Progress & Sync</button>
+        </div>
+        <div id="weeklyGoalsFull"></div>
+
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--glass-border);">
+          <div class="card-title">What I Couldn't Do / Reflection Notes for AI Mentor</div>
+          <textarea class="reflection-textarea" id="weeklyReflection" placeholder="Tell your AI mentor what you struggled with this week (e.g., 'Got stuck on Git branch command', 'Felt overwhelmed by mid-sem study'). The Agent will adjust next week's roadmap accordingly!"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI PAPERS & YT -->
+    <div class="page" id="page-research">
+      <div class="page-header">
+        <div class="page-title">AI Research Papers & Curated YouTube 🔬</div>
+        <div class="page-subtitle">Stay ahead of fast-moving AI breakthroughs with handpicked papers & tutorials.</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title" style="color:var(--cyan)">📄 This Week's Research Paper</div>
+          <div id="papersList"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="color:var(--amber)">📺 Recommended YouTube Learning</div>
+          <div id="youtubeList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENTOR INSIGHTS -->
+    <div class="page" id="page-mentor">
+      <div class="page-header">
+        <div class="page-title">Mentor Assessment Report 📊</div>
+        <div class="page-subtitle">Real-time feedback & hostel discipline evaluation.</div>
+      </div>
+
+      <div class="card section-gap">
+        <div class="card-title">Overall Assessment</div>
+        <div id="mentorAssessmentText" style="font-size:15px; line-height:1.7; color:var(--text-primary)"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">💡 Industry Insights</div>
+          <div id="mentorIndustryInsights"></div>
+        </div>
+        <div class="card" style="background:rgba(239,68,68,0.05); border-color:rgba(239,68,68,0.2)">
+          <div class="card-title" style="color:var(--red)">⚠️ Warnings & Advice</div>
+          <div id="mentorWarningsList"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Embedded Default Fallback Store (Ensures app NEVER breaks even if script tag delays)
+const DEFAULT_FALLBACK_STORE = {
+  "week_title": "Week 1: Python Foundation & Git Workflow (Industry Benchmark)",
+  "industry_focus": "Product Engineering & Software Foundations (FAANG / AI Startups)",
+  "weekly_goals": [
+    { "id": "w1_1", "category": "tech", "text": "Setup Developer Environment: VS Code + Python 3.12 + Git + GitHub SSH Keys", "difficulty": "Beginner", "impact": "Essential dev infrastructure for all software engineering", "done": false },
+    { "id": "w1_2", "category": "tech", "text": "Complete CS50P Lecture 0 & 1 (Functions, Variables, Conditionals)", "difficulty": "Beginner", "impact": "Core computational thinking for coding interviews", "done": false },
+    { "id": "w1_3", "category": "tech", "text": "Build & push first Python CLI script to GitHub with clean README", "difficulty": "Intermediate", "impact": "Demonstrates real version control habits from Year 1", "done": false },
+    { "id": "w1_4", "category": "research", "text": "Read Jay Alammar's 'Illustrated Transformer' visual guide", "difficulty": "Intermediate", "impact": "Grasp intuition behind modern LLMs (ChatGPT, Gemini)", "done": false },
+    { "id": "w1_5", "category": "fitness", "text": "30-min daily brisk walk + 20 pushups (Hostel Health Protocol)", "difficulty": "Beginner", "impact": "Maintains physical energy for long coding sessions", "done": false },
+    { "id": "w1_6", "category": "finance", "text": "Track all hostel expenditures daily in budget spreadsheet", "difficulty": "Beginner", "impact": "Financial discipline & money management", "done": false }
+  ],
+  "curated_resources": {
+    "youtube_videos": [
+      { "title": "CS50’s Introduction to Programming with Python", "url": "https://www.youtube.com/watch?v=nLRL_NcnK-4", "duration": "16 Hours", "channel": "Harvard CS50", "why_watch": "Gold standard Python introduction covering functions, variables, and conditionals." },
+      { "title": "Git and GitHub for Beginners", "url": "https://www.youtube.com/watch?v=RGOj5yH7evE", "duration": "1 Hour", "channel": "freeCodeCamp", "why_watch": "Learn how top engineering teams manage repositories, commits, and PRs." }
+    ],
+    "research_papers": [
+      { "title": "Attention Is All You Need (Vaswani et al., 2017)", "arxiv_id": "1706.03762", "pdf_url": "https://arxiv.org/pdf/1706.03762.pdf", "summary_url": "https://jalammar.github.io/illustrated-transformer/", "key_takeaway": "Introduced Transformers - the foundational architecture behind modern AI & LLMs.", "reading_guideline": "Read Jay Alammar's Illustrated Transformer visual guide!" }
+    ]
+  },
+  "report": {
+    "overall_assessment": "Welcome to Year 1, Semester 1! Your AI Agent has initialized your industry-standard roadmap.",
+    "industry_insights": [
+      "Product companies prioritize strong fundamentals (Python, Data Structures) combined with Git hygiene early on.",
+      "Understanding LLM foundations (Transformers) from Year 1 will give you a massive competitive edge for AI/ML engineering roles."
+    ],
+    "warnings": [
+      "Hostel Discipline: Do not sacrifice sleep for late-night gaming before 9 AM lectures.",
+      "Coding Rule: Write code on VS Code daily — reading tutorials without coding yields zero skill growth."
+    ]
+  }
+};
+
+let storeData = window.MENTOR_STORE || DEFAULT_FALLBACK_STORE;
+let userDoneMap = {};
+
+function initApp() {
+  const savedState = localStorage.getItem('mentor_user_done');
+  if (savedState) {
+    try { userDoneMap = JSON.parse(savedState); } catch(e) {}
+  }
+
+  const savedReflection = localStorage.getItem('mentor_user_reflection');
+  if (savedReflection) {
+    const el = document.getElementById('weeklyReflection');
+    if (el) el.value = savedReflection;
+  }
+
+  renderAll();
+  renderReport();
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+}
+
+function renderAll() {
+  if (!storeData) storeData = DEFAULT_FALLBACK_STORE;
+
+  document.getElementById('weekTitleBadge').textContent = storeData.week_title || '';
+  document.getElementById('weeklyFocusHeader').textContent = storeData.week_title || 'Weekly Goals';
+
+  const goals = storeData.weekly_goals || [];
+  let doneCount = 0;
+
+  const html = goals.map((g) => {
+    const isDone = userDoneMap[g.id] !== undefined ? userDoneMap[g.id] : g.done;
+    if (isDone) doneCount++;
+    return `
+      <div class="goal-item ${isDone ? 'done' : ''}">
+        <div class="goal-check" onclick="toggleGoal('${g.id}')"></div>
+        <div class="goal-text">
+          <div><strong>${g.text}</strong></div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Impact: ${g.impact} | Difficulty: ${g.difficulty}</div>
+        </div>
+        <span class="goal-category cat-${g.category}">${g.category}</span>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('dashWeeklyList').innerHTML = html;
+  document.getElementById('weeklyGoalsFull').innerHTML = html;
+  document.getElementById('statTasksDone').textContent = `${doneCount}/${goals.length}`;
+
+  const gamingHours = doneCount * 0.75;
+  document.getElementById('statGaming').textContent = gamingHours + 'h';
+  document.getElementById('sidebarCredits').textContent = gamingHours + 'h earned';
+
+  renderResources();
+}
+
+function renderResources() {
+  if (!storeData || !storeData.curated_resources) return;
+  const res = storeData.curated_resources;
+
+  const papersHtml = (res.research_papers || []).map(p => `
+    <div class="resource-card">
+      <div class="resource-title">
+        <span>${p.title}</span>
+        <span style="font-size:11px; background:rgba(6,182,212,0.2); color:var(--cyan); padding:2px 8px; border-radius:10px;">ArXiv ${p.arxiv_id}</span>
+      </div>
+      <div class="resource-meta">${p.key_takeaway}</div>
+      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">💡 ${p.reading_guideline}</div>
+      <div style="display:flex; gap:12px;">
+        <a class="resource-link" href="${p.pdf_url}" target="_blank">📄 Read PDF Paper</a>
+        <a class="resource-link" href="${p.summary_url}" target="_blank" style="color:var(--purple-light)">📖 Visual Summary</a>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('papersList').innerHTML = papersHtml;
+
+  const ytHtml = (res.youtube_videos || []).map(v => `
+    <div class="resource-card">
+      <div class="resource-title">
+        <span>${v.title}</span>
+        <span style="font-size:11px; background:rgba(245,158,11,0.2); color:var(--amber); padding:2px 8px; border-radius:10px;">${v.duration}</span>
+      </div>
+      <div class="resource-meta">Channel: ${v.channel}</div>
+      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">💡 ${v.why_watch}</div>
+      <a class="resource-link" href="${v.url}" target="_blank" style="color:var(--amber)">▶️ Watch Tutorial on YouTube</a>
+    </div>
+  `).join('');
+  document.getElementById('youtubeList').innerHTML = ytHtml;
+
+  if (res.research_papers && res.research_papers[0]) {
+    document.getElementById('dashMediaPreview').innerHTML = `
+      <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">${res.research_papers[0].title}</div>
+      <a class="resource-link" href="${res.research_papers[0].summary_url}" target="_blank" style="font-size:12px;">📖 Read Jay Alammar Summary →</a>
+    `;
+  }
+}
+
+function renderReport() {
+  if (!storeData || !storeData.report) return;
+  const r = storeData.report;
+  document.getElementById('agentBriefingText').textContent = r.overall_assessment || '';
+  document.getElementById('mentorAssessmentText').textContent = r.overall_assessment || '';
+
+  if (r.industry_insights) {
+    document.getElementById('mentorIndustryInsights').innerHTML = r.industry_insights.map(i => `<div style="font-size:14px; margin-bottom:10px; line-height:1.5;">💡 ${i}</div>`).join('');
+  }
+  if (r.warnings) {
+    document.getElementById('mentorWarningsList').innerHTML = r.warnings.map(w => `<div style="font-size:14px; margin-bottom:10px; line-height:1.5; color:var(--text-primary);">⚠️ ${w}</div>`).join('');
+  }
+}
+
+function toggleGoal(id) {
+  userDoneMap[id] = !userDoneMap[id];
+  localStorage.setItem('mentor_user_done', JSON.stringify(userDoneMap));
+  renderAll();
+  saveAgentStateFile(false);
+}
+
+function saveAgentStateFile(showToastAlert = true) {
+  const reflectionVal = document.getElementById('weeklyReflection') ? document.getElementById('weeklyReflection').value : '';
+  localStorage.setItem('mentor_user_reflection', reflectionVal);
+
+  const payload = {
+    updated_at: new Date().toISOString(),
+    week_key: storeData ? storeData.week_key : "2026-08-10",
+    completed_goals: userDoneMap,
+    reflection_notes: reflectionVal
+  };
+
+  if (showToastAlert) {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'mentor_user_state.json';
+    a.click();
+    showToast('Saved & Synced! mentor_user_state.json downloaded for Agent pipeline.');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+initApp();
+</script>
+</body>
+</html>

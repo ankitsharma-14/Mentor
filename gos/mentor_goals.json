@@ -1,0 +1,103 @@
+{
+  "week_key": "2026-08-10_w1",
+  "week_title": "Week 1: Python Foundations & Git Version Control",
+  "industry_focus": "Product Engineering & Software Foundations (FAANG Benchmark)",
+  "generated_at": "2026-08-11T16:14:31.971409",
+  "weekly_goals": [
+    {
+      "id": "w1_1",
+      "category": "tech",
+      "text": "Setup Developer Environment: VS Code + Python 3.12 + Git + GitHub SSH Keys",
+      "difficulty": "Beginner",
+      "impact": "Essential dev infrastructure for all software engineering",
+      "done": false
+    },
+    {
+      "id": "w1_2",
+      "category": "tech",
+      "text": "Complete CS50P Lecture 0 & 1 (Functions, Variables, Conditionals)",
+      "difficulty": "Beginner",
+      "impact": "Core computational thinking for coding interviews",
+      "done": false
+    },
+    {
+      "id": "w1_3",
+      "category": "tech",
+      "text": "Build & push first Python CLI script to GitHub with clean README",
+      "difficulty": "Intermediate",
+      "impact": "Demonstrates real version control habits from Year 1",
+      "done": false
+    },
+    {
+      "id": "w1_4",
+      "category": "research",
+      "text": "Read Jay Alammar's 'Illustrated Transformer' visual guide",
+      "difficulty": "Intermediate",
+      "impact": "Grasp intuition behind modern LLMs (ChatGPT, Gemini)",
+      "done": false
+    },
+    {
+      "id": "w1_5",
+      "category": "fitness",
+      "text": "30-min daily brisk walk + 20 pushups (Hostel Health Protocol)",
+      "difficulty": "Beginner",
+      "impact": "Maintains physical energy for long coding sessions",
+      "done": false
+    },
+    {
+      "id": "w1_6",
+      "category": "finance",
+      "text": "Track all hostel expenditures daily in budget spreadsheet",
+      "difficulty": "Beginner",
+      "impact": "Financial discipline & money management",
+      "done": false
+    }
+  ],
+  "curated_resources": {
+    "youtube_videos": [
+      {
+        "title": "CS50\u2019s Introduction to Programming with Python",
+        "url": "https://www.youtube.com/watch?v=nLRL_NcnK-4",
+        "duration": "16 Hours",
+        "channel": "Harvard CS50 / freeCodeCamp",
+        "why_watch": "Gold standard Python introduction covering functions, variables, and conditionals."
+      },
+      {
+        "title": "Git and GitHub for Beginners - Full Course",
+        "url": "https://www.youtube.com/watch?v=RGOj5yH7evE",
+        "duration": "1 Hour",
+        "channel": "freeCodeCamp",
+        "why_watch": "Learn how top engineering teams manage repositories, commits, and PRs."
+      }
+    ],
+    "research_papers": [
+      {
+        "title": "Beyond Naturalness: Probing Automated Text-To-Speech Evaluators on Linguistically Grounded Dimensions",
+        "arxiv_id": "2608.09930v1",
+        "pdf_url": "https://arxiv.org/pdf/2608.09930v1.pdf",
+        "summary_url": "https://arxiv.org/abs/2608.09930v1",
+        "key_takeaway": "Automated Text-to-Speech (TTS) evaluation methods (Mean Opinion Score (MOS) predictors and Audio Large Language Models (Audio-LLM) judges) are expected to reflect human perception,...",
+        "reading_guideline": "Read the abstract & conclusion to spot emerging AI trends."
+      },
+      {
+        "title": "Multimodal Model Diffing for Feature Discovery and Control",
+        "arxiv_id": "2608.09928v1",
+        "pdf_url": "https://arxiv.org/pdf/2608.09928v1.pdf",
+        "summary_url": "https://arxiv.org/abs/2608.09928v1",
+        "key_takeaway": "Multimodal Large Language Models (MLLMs) exhibit strong visual understanding, yet the internal features that cause these behaviors remain difficult to identify, audit, or control. ...",
+        "reading_guideline": "Read the abstract & conclusion to spot emerging AI trends."
+      }
+    ]
+  },
+  "report": {
+    "overall_assessment": "Week 1 Assessment: You have completed 0 out of 6 goals. Focus on finishing 1 small coding task today to build momentum.",
+    "industry_insights": [
+      "Product Engineering Benchmark: FAANG & top AI startups evaluate candidates on Git cleanliness and basic Data Structures in Year 1.",
+      "AI Trend: Reading 1 research paper abstract weekly builds technical depth that sets you apart from 99% of engineering students."
+    ],
+    "warnings": [
+      "Hostel Discipline: Do not sacrifice sleep for late-night gaming before 9 AM lectures.",
+      "Coding Rule: Write code on VS Code daily \u2014 reading tutorials without coding yields zero skill growth."
+    ]
+  }
+}
