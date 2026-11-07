@@ -1,78 +1,57 @@
-[MENTOR_README.md](https://github.com/user-attachments/files/31658794/MENTOR_README.md)
-# 🎯 Mentor
+# Mentor OS
 
-A structured knowledge-sharing and mentorship platform designed to help emerging developers level up their technical skills, navigate learning paths, and build real-world software projects.
+Mentor OS is a personal learning dashboard with weekly developer goals, curated learning resources, and a Python research-data pipeline. The dashboard is implemented in `gos/mentor.html` and reads data from `gos/mentor_store.js`.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Status](https://img.shields.io/badge/status-active-brightgreen.svg)
-![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+## Getting started
 
----
+1. Clone this repository:
 
-## 📖 Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Learning Modules](#-learning-modules)
-- [Getting Started](#-getting-started)
-- [How to Contribute](#-how-to-contribute)
-- [License](#-license)
-
----
-
-## 🌟 Overview
-
-**Mentor** is a central hub for developer growth. Learning to code or taking on advanced technical concepts can be overwhelming—this repository bridges that gap by providing clear roadmaps, code review guidelines, curated learning paths, and actionable advice.
-
-Whether you are looking for structured guidance on a specific technology stack or sharing your own knowledge to help peers, **Mentor** acts as an accessible toolkit for collaborative growth.
-
----
-
-## ✨ Key Features
-
-- 🗺️ **Structured Roadmaps:** Step-by-step learning paths covering core fundamentals to production-level concepts.
-- 💡 **Best Practices & Guides:** Clean code principles, design patterns, and architecture recommendations.
-- 🛠️ **Project Ideas & Prompts:** Hands-on build exercises designed to strengthen problem-solving skills.
-- 🤝 **Peer Collaboration:** Open framework for requesting code reviews, sharing feedback, and mentoring others.
-
----
-
-## 📚 Learning Modules
-
-| Module | Focus Area | Description |
-| :--- | :--- | :--- |
-| **01-Fundamentals** | Core Logic & CS | Data structures, algorithms, and version control basics. |
-| **02-Web Architecture** | Full-Stack Dev | Front-end performance, API design, and database integration. |
-| **03-Clean Code** | Refactoring | Code quality, testing standards, and maintainable patterns. |
-| **04-Career & Projects**| Portfolio | Project architecture, deployment strategies, and resume building. |
-
----
-
-## 🚀 Getting Started
-
-1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/mentor.git
-   cd mentor
+   git clone https://github.com/ankitsharma-14/Mentor.git
+   cd Mentor
    ```
 
-2. **Explore the resources:**
-   Navigate through the folders to find guides, templates, and learning paths suited to your current goals.
+2. Open `gos/mentor.html` in a modern browser. The dashboard loads the committed `gos/mentor_store.js` snapshot, so you can inspect the sample data without first running the pipeline. Internet access is required for CDN assets such as Chart.js and Google Fonts.
 
----
+3. To run a local web server instead of opening the HTML file directly:
 
-## 🤝 How to Contribute
+   ```bash
+   python3 -m http.server 8000
+   ```
 
-Contributions are welcome! If you have resources, guides, or roadmaps to add:
+   Then open `http://localhost:8000/gos/mentor.html`.
 
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/NewGuide`).
-3. Commit your changes (`git commit -m 'Add new developer guide'`).
-4. Push to the branch (`git push origin feature/NewGuide`).
-5. Open a Pull Request.
+## Repository layout
 
----
+```text
+Mentor/
+├── README.md
+└── gos/
+    ├── agent_pipeline.py  # Python data-generation pipeline
+    ├── mentor.html        # Browser-based dashboard
+    ├── mentor_store.js    # Dashboard data available as window.MENTOR_STORE
+    ├── mentor_data.json   # Generated or stored research data
+    ├── mentor_goals.json  # Goal data
+    └── mentor_report.json # Report snapshot
+```
 
-## 📜 License
+## Refreshing research data
 
-Distributed under the MIT License. See `LICENSE` for more information.
+The pipeline lives at `gos/agent_pipeline.py`. It fetches research metadata from arXiv and writes dashboard data. Review its output paths and generated data before running it; the supplied JSON and JavaScript files may be overwritten.
+
+Run it from the `gos` directory so relative paths refer to the right files:
+
+```bash
+cd gos
+python3 agent_pipeline.py
+```
+
+The script uses Python standard-library modules. Internet connectivity is required to fetch live research resources, and arXiv requests can fail if the network service is unavailable.
+
+## Contributing
+
+Useful contributions include documentation corrections, dashboard accessibility improvements, small bug fixes, and tests for the data pipeline. Please describe the problem and the verification performed in your pull request.
+
+## Licensing
+
+This repository does not currently include a `LICENSE` file. Please contact the repository owner before assuming permission to redistribute the source code.
