@@ -3,7 +3,6 @@ import os
 import sys
 import datetime
 import urllib.request
-import ssl
 import xml.etree.ElementTree as ET
 
 # Ensure utf-8 stdout for Windows console
@@ -69,12 +68,8 @@ def fetch_arxiv_papers(query="cat:cs.CL+OR+cat:cs.AI", max_results=2):
     """Fetch live AI research papers from arXiv API safely."""
     papers = []
     try:
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        
         url = f"https://export.arxiv.org/api/query?search_query={query}&sortBy=submittedDate&sortOrder=descending&max_results={max_results}"
-        req = urllib.request.urlopen(url, context=ctx, timeout=8)
+        req = urllib.request.urlopen(url, timeout=8)
         xml_data = req.read()
         root = ET.fromstring(xml_data)
         
